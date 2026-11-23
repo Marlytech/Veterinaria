@@ -1,0 +1,1349 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huellitas & Granel POS | Punto de Venta para Mascotas</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Fredoka (títulos amigables) & Plus Jakarta Sans (legibilidad POS) -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'sans-serif'],
+                        display: ['Fredoka', 'sans-serif'],
+                    },
+                    colors: {
+                        pet: {
+                            cream: '#F8FAFC',
+                            warmCream: '#FFFBEB',
+                            navy: '#0F172A',
+                            navyLight: '#1E3A8A',
+                            coral: '#F97316',
+                            coralDark: '#EA580C',
+                            roseAccent: '#FB7185',
+                            emerald: '#10B981',
+                            emeraldDark: '#059669'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #F8FAFC;
+            color: #0F172A;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+        .ticket-paper {
+            background-image: radial-gradient(#cbd5e1 1px, transparent 0);
+            background-size: 16px 16px;
+        }
+        @keyframes popIn {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col antialiased selection:bg-pet-coral selection:text-white">
+
+    <!-- Notificaciones Toast Flotantes -->
+    <div id="toast-container" class="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+    <!-- ========================================== -->
+    <!-- BARRA SUPERIOR DE NAVEGACIÓN               -->
+    <!-- ========================================== -->
+    <header class="bg-gradient-to-r from-pet-navy via-slate-900 to-pet-navyLight text-white sticky top-0 z-40 shadow-lg border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex flex-wrap items-center justify-between py-3 gap-3">
+                
+                <!-- Identidad de la Tienda -->
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-pet-coral to-pet-roseAccent flex items-center justify-center text-white shadow-md shadow-orange-500/25 shrink-0">
+                        <i data-lucide="paw-print" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h1 id="store-name-header" class="font-display text-xl sm:text-2xl font-bold tracking-wide text-white leading-none">
+                            Huellitas & Granel
+                        </h1>
+                        <p class="text-xs text-sky-200/80 font-medium mt-0.5">Punto de Venta & Control de Costales</p>
+                    </div>
+                </div>
+
+                <!-- Pestañas Principales -->
+                <nav class="flex items-center bg-slate-950/60 p-1 rounded-xl border border-slate-700/80">
+                    <button onclick="switchMainTab('pos')" id="nav-pos" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-pet-coral text-white shadow-md shadow-orange-500/20 transition-all">
+                        <i data-lucide="store" class="w-4 h-4"></i>
+                        <span>Punto de Venta</span>
+                    </button>
+                    <button onclick="switchMainTab('sacks')" id="nav-sacks" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition-all relative">
+                        <i data-lucide="package-open" class="w-4 h-4"></i>
+                        <span>Control de Costales</span>
+                        <span id="low-sack-badge" class="hidden w-2.5 h-2.5 rounded-full bg-pet-roseAccent animate-ping absolute top-1.5 right-1.5"></span>
+                    </button>
+                    <button onclick="switchMainTab('history')" id="nav-history" class="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition-all">
+                        <i data-lucide="history" class="w-4 h-4"></i>
+                        <span>Ventas del Día</span>
+                    </button>
+                </nav>
+
+                <!-- Botones Rápidos de Demostración -->
+                <div class="flex items-center gap-2">
+                    <button onclick="loadSampleCart()" title="Llenar carrito con venta de ejemplo" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-pet-emerald/20 hover:bg-pet-emerald/30 border border-emerald-400/30 text-xs font-bold text-emerald-200 transition-colors">
+                        <i data-lucide="zap" class="w-3.5 h-3.5 text-pet-emerald"></i>
+                        <span>Venta Rápida Demo</span>
+                    </button>
+                    <button onclick="openCustomizeModal()" class="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white/10 hover:bg-white/20 border border-white/15 text-xs font-semibold text-amber-100 transition-colors">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-pet-coral"></i>
+                        <span class="hidden sm:inline">Personalizar</span>
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </header>
+
+    <!-- ========================================== -->
+    <!-- VISTA 1: PUNTO DE VENTA (CATÁLOGO + TICKET)-->
+    <!-- ========================================== -->
+    <main id="view-pos" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-5">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            
+            <!-- COLUMNA IZQUIERDA (7 cols): CATÁLOGO DE PRODUCTOS -->
+            <div class="lg:col-span-7 space-y-4">
+                
+                <!-- Buscador y Filtros Rápidos -->
+                <div class="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-xs space-y-3">
+                    <div class="relative">
+                        <i data-lucide="search" class="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2"></i>
+                        <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Buscar croquetas, arena, collar, sobre, shampoo..." 
+                            class="w-full bg-slate-100 border border-slate-200 focus:border-pet-coral focus:bg-white rounded-xl pl-11 pr-4 py-3 text-sm font-medium focus:outline-none transition-colors">
+                    </div>
+
+                    <div class="flex items-center gap-2 overflow-x-auto no-scrollbar">
+                        <button onclick="setCatalogFilter('all')" data-filter="all" class="cat-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-pet-navy text-white shrink-0 transition-all">
+                            Todos
+                        </button>
+                        <button onclick="setCatalogFilter('bulk')" data-filter="bulk" class="cat-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-pet-warmCream text-orange-800 border border-orange-200 shrink-0 flex items-center gap-1.5 transition-all">
+                            <i data-lucide="scale" class="w-3.5 h-3.5 text-pet-coral"></i>
+                            <span>Alimento a Granel (Por Kg / $)</span>
+                        </button>
+                        <button onclick="setCatalogFilter('accessory')" data-filter="accessory" class="cat-filter-btn px-3.5 py-1.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 shrink-0 flex items-center gap-1.5 transition-all">
+                            <i data-lucide="bone" class="w-3.5 h-3.5 text-pet-emerald"></i>
+                            <span>Accesorios y Farmacia</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Grid de Productos -->
+                <div id="catalog-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <!-- Tarjetas generadas dinámicamente por JS -->
+                </div>
+            </div>
+
+            <!-- COLUMNA DERECHA (5 cols): CARRITO / TICKET EN VIVO -->
+            <div class="lg:col-span-5 lg:sticky lg:top-20 bg-white rounded-2xl border border-slate-200 shadow-xl overflow-hidden flex flex-col">
+                
+                <!-- Cabecera del Ticket -->
+                <div class="bg-pet-navy text-white px-5 py-3.5 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <i data-lucide="receipt" class="w-5 h-5 text-pet-coral"></i>
+                        <h2 class="font-display text-lg font-bold tracking-wide">Ticket Actual</h2>
+                    </div>
+                    <span id="ticket-items-badge" class="bg-pet-coral text-white text-xs font-extrabold px-2.5 py-0.5 rounded-full">
+                        0 artículos
+                    </span>
+                </div>
+
+                <!-- Lista de Artículos en el Carrito -->
+                <div id="cart-list" class="p-4 divide-y divide-slate-100 max-h-[340px] overflow-y-auto min-h-[180px]">
+                    <!-- Estado vacío inicial -->
+                    <div id="cart-empty" class="py-10 text-center text-slate-400 flex flex-col items-center">
+                        <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-2">
+                            <i data-lucide="shopping-cart" class="w-6 h-6 text-slate-400"></i>
+                        </div>
+                        <p class="text-sm font-semibold text-slate-600">El ticket está vacío</p>
+                        <p class="text-xs mt-0.5">Selecciona alimento a granel o accesorios para comenzar.</p>
+                    </div>
+                </div>
+
+                <!-- Panel de Cobro y Método de Pago -->
+                <div class="p-4 bg-slate-50 border-t border-slate-200 space-y-4">
+                    
+                    <!-- Totales -->
+                    <div class="space-y-1">
+                        <div class="flex justify-between text-xs font-medium text-slate-500">
+                            <span>Subtotal</span>
+                            <span id="pos-subtotal">$0.00 MXN</span>
+                        </div>
+                        <div class="flex justify-between items-baseline pt-1 border-t border-slate-200">
+                            <span class="text-sm font-extrabold uppercase text-pet-navy">Total a Cobrar</span>
+                            <span id="pos-total" class="font-display text-3xl font-bold text-pet-emerald">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Selector Método de Pago -->
+                    <div>
+                        <label class="block text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Método de Pago</label>
+                        <div class="grid grid-cols-3 gap-2">
+                            <button type="button" onclick="selectPaymentMethod('Efectivo')" id="pay-Efectivo" class="pay-method-btn py-2 px-2 rounded-xl border-2 border-pet-emerald bg-emerald-50 text-pet-emeraldDark text-xs font-bold flex items-center justify-center gap-1 transition-all">
+                                <i data-lucide="banknote" class="w-4 h-4"></i>
+                                <span>Efectivo</span>
+                            </button>
+                            <button type="button" onclick="selectPaymentMethod('Tarjeta')" id="pay-Tarjeta" class="pay-method-btn py-2 px-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold flex items-center justify-center gap-1 transition-all">
+                                <i data-lucide="credit-card" class="w-4 h-4"></i>
+                                <span>Tarjeta</span>
+                            </button>
+                            <button type="button" onclick="selectPaymentMethod('Transferencia')" id="pay-Transferencia" class="pay-method-btn py-2 px-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold flex items-center justify-center gap-1 transition-all">
+                                <i data-lucide="smartphone" class="w-4 h-4"></i>
+                                <span>Transfer.</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Calculadora Rápida de Cambio (Solo visible en Efectivo) -->
+                    <div id="cash-change-box" class="bg-pet-warmCream p-3 rounded-xl border border-amber-200/80 flex items-center justify-between gap-3">
+                        <div class="flex-1">
+                            <label class="block text-[11px] font-bold text-slate-600 uppercase">Paga con ($ MXN)</label>
+                            <input type="number" id="cash-received" oninput="calculateChange()" placeholder="Ej. 200" 
+                                class="w-full mt-0.5 text-base font-extrabold text-pet-navy bg-white border border-amber-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-2 focus:ring-pet-coral">
+                        </div>
+                        <div class="text-right">
+                            <span class="block text-[11px] font-bold text-slate-600 uppercase">Cambio</span>
+                            <span id="cash-change-display" class="font-display text-xl font-bold text-pet-coral">$0.00</span>
+                        </div>
+                    </div>
+
+                    <!-- Botones de Acción Principales -->
+                    <div class="space-y-2 pt-1">
+                        <button onclick="processCheckout()" class="w-full bg-pet-emerald hover:bg-pet-emeraldDark text-white font-bold py-3.5 px-4 rounded-xl shadow-lg shadow-emerald-500/25 flex items-center justify-center gap-2 transition-all active:scale-[0.99]">
+                            <i data-lucide="printer" class="w-5 h-5"></i>
+                            <span>Cobrar e Imprimir Ticket</span>
+                        </button>
+                        
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="sendCartToWhatsApp()" class="py-2.5 px-3 rounded-xl bg-sky-100 hover:bg-sky-200 text-pet-navyLight font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+                                <i data-lucide="message-circle" class="w-4 h-4"></i>
+                                <span>Enviar WhatsApp</span>
+                            </button>
+                            <button onclick="clearCart()" class="py-2.5 px-3 rounded-xl bg-slate-200/80 hover:bg-rose-100 text-slate-700 hover:text-rose-700 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors">
+                                <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                <span>Limpiar Venta</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- ========================================== -->
+    <!-- VISTA 2: CONTROL DE COSTALES / INVENTARIO  -->
+    <!-- ========================================== -->
+    <section id="view-sacks" class="hidden flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+        
+        <div class="bg-white p-5 rounded-2xl border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
+            <div>
+                <h2 class="font-display text-2xl font-bold text-pet-navy flex items-center gap-2">
+                    <i data-lucide="package-open" class="w-6 h-6 text-pet-coral"></i>
+                    Control de Costales Abiertos (Granel)
+                </h2>
+                <p class="text-sm text-slate-500 mt-0.5">
+                    Cada venta a granel descuenta automáticamente los gramos despachados. Abre un costal nuevo cuando esté por terminarse.
+                </p>
+            </div>
+            <div class="flex items-center gap-2 text-xs font-bold bg-pet-warmCream text-orange-900 border border-orange-200 px-3.5 py-2 rounded-xl shrink-0">
+                <i data-lucide="info" class="w-4 h-4 text-pet-coral"></i>
+                <span>Descuento automático en tiempo real</span>
+            </div>
+        </div>
+
+        <!-- Grid de Tarjetas de Costales -->
+        <div id="sacks-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- Generado dinámicamente por JS -->
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- VISTA 3: VENTAS DEL DÍA / CORTE DE CAJA    -->
+    <!-- ========================================== -->
+    <section id="view-history" class="hidden flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+        
+        <!-- Resumen de Corte Rápido -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold uppercase text-slate-400">Ventas Registradas Hoy</span>
+                    <p id="kpi-sales-count" class="font-display text-3xl font-bold text-pet-navy mt-1">3</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-sky-50 text-pet-navyLight flex items-center justify-center">
+                    <i data-lucide="receipt" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold uppercase text-slate-400">Ingreso Total en Caja</span>
+                    <p id="kpi-sales-total" class="font-display text-3xl font-bold text-pet-emerald mt-1">$0.00</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-pet-emerald flex items-center justify-center">
+                    <i data-lucide="wallet" class="w-6 h-6"></i>
+                </div>
+            </div>
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-between">
+                <div>
+                    <span class="text-xs font-bold uppercase text-slate-400">Granel Despachado Hoy</span>
+                    <p id="kpi-bulk-kg" class="font-display text-3xl font-bold text-pet-coral mt-1">0.00 kg</p>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-pet-warmCream text-pet-coral flex items-center justify-center">
+                    <i data-lucide="scale" class="w-6 h-6"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tabla de Tickets del Día -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-200 flex items-center justify-between">
+                <h3 class="font-display text-lg font-bold text-pet-navy">Historial de Tickets Emitidos</h3>
+                <span class="text-xs font-semibold text-slate-400">Actualizado en tiempo real</span>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-extrabold uppercase text-slate-500">
+                            <th class="py-3 px-4">Folio / Hora</th>
+                            <th class="py-3 px-4">Detalle de Productos</th>
+                            <th class="py-3 px-4">Método</th>
+                            <th class="py-3 px-4 text-right">Total</th>
+                        </tr>
+                    </thead>
+                    <tbody id="sales-history-body" class="divide-y divide-slate-100 text-sm">
+                        <!-- Filas generadas por JS -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <!-- ========================================== -->
+    <!-- MODAL 1: PESAJE INTELIGENTE (GRANEL)       -->
+    <!-- ========================================== -->
+    <div id="bulk-modal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-md rounded-3xl overflow-hidden shadow-2xl animate-pop">
+            
+            <!-- Header del Producto a Granel -->
+            <div class="bg-gradient-to-r from-pet-navy via-pet-navyLight to-blue-800 text-white p-5 relative">
+                <button onclick="closeBulkModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/15 hover:bg-white/25 flex items-center justify-center text-white">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-pet-coral text-white uppercase tracking-wider mb-1.5">
+                    <i data-lucide="scale" class="w-3 h-3"></i> Venta a Granel
+                </span>
+                <h3 id="bulk-modal-name" class="font-display text-2xl font-bold leading-tight">Croquetas Adulto</h3>
+                <p id="bulk-modal-price-kg" class="text-sm text-sky-200 font-semibold mt-0.5">$48.00 MXN / Kilogramo</p>
+            </div>
+
+            <div class="p-5 space-y-5">
+                <!-- Selector de Modo: Por Peso vs Por Dinero -->
+                <div class="grid grid-cols-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button type="button" onclick="setBulkMode('weight')" id="tab-bulk-weight" class="py-2.5 rounded-lg text-xs sm:text-sm font-extrabold bg-white text-pet-navy shadow-xs flex items-center justify-center gap-1.5 transition-all">
+                        <i data-lucide="weight" class="w-4 h-4 text-pet-coral"></i>
+                        <span>Por Peso (Kg/g)</span>
+                    </button>
+                    <button type="button" onclick="setBulkMode('money')" id="tab-bulk-money" class="py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-500 hover:text-pet-navy flex items-center justify-center gap-1.5 transition-all">
+                        <i data-lucide="dollar-sign" class="w-4 h-4 text-pet-emerald"></i>
+                        <span>Por Dinero ($ MXN)</span>
+                    </button>
+                </div>
+
+                <!-- PANEL A: VENTA POR PESO -->
+                <div id="panel-bulk-weight" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Pesos rápidos</label>
+                        <div class="grid grid-cols-5 gap-1.5">
+                            <button type="button" onclick="setPresetWeight(0.25)" class="py-2 rounded-xl bg-pet-warmCream hover:bg-pet-coral text-orange-900 hover:text-white border border-orange-200 font-bold text-xs transition-colors">250g</button>
+                            <button type="button" onclick="setPresetWeight(0.5)" class="py-2 rounded-xl bg-pet-warmCream hover:bg-pet-coral text-orange-900 hover:text-white border border-orange-200 font-bold text-xs transition-colors">500g</button>
+                            <button type="button" onclick="setPresetWeight(1)" class="py-2 rounded-xl bg-pet-warmCream hover:bg-pet-coral text-orange-900 hover:text-white border border-orange-200 font-bold text-xs transition-colors">1 kg</button>
+                            <button type="button" onclick="setPresetWeight(2)" class="py-2 rounded-xl bg-pet-warmCream hover:bg-pet-coral text-orange-900 hover:text-white border border-orange-200 font-bold text-xs transition-colors">2 kg</button>
+                            <button type="button" onclick="setPresetWeight(5)" class="py-2 rounded-xl bg-pet-warmCream hover:bg-pet-coral text-orange-900 hover:text-white border border-orange-200 font-bold text-xs transition-colors">5 kg</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">O ingresa el peso de la báscula (en Kilogramos)</label>
+                        <div class="relative">
+                            <input type="number" step="0.005" min="0.05" id="input-bulk-kg" oninput="recalcFromWeight()" value="1.000" 
+                                class="w-full bg-slate-100 border-2 border-slate-200 focus:border-pet-coral focus:bg-white rounded-xl px-4 py-3 text-xl font-extrabold text-pet-navy focus:outline-none">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">kg</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PANEL B: VENTA POR DINERO ("Dame $50 pesos de croquetas") -->
+                <div id="panel-bulk-money" class="hidden space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-2">Montos frecuentes</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <button type="button" onclick="setPresetMoney(20)" class="py-2.5 rounded-xl bg-emerald-50 hover:bg-pet-emerald text-emerald-900 hover:text-white border border-emerald-200 font-extrabold text-sm transition-colors">$20</button>
+                            <button type="button" onclick="setPresetMoney(50)" class="py-2.5 rounded-xl bg-emerald-50 hover:bg-pet-emerald text-emerald-900 hover:text-white border border-emerald-200 font-extrabold text-sm transition-colors">$50</button>
+                            <button type="button" onclick="setPresetMoney(100)" class="py-2.5 rounded-xl bg-emerald-50 hover:bg-pet-emerald text-emerald-900 hover:text-white border border-emerald-200 font-extrabold text-sm transition-colors">$100</button>
+                            <button type="button" onclick="setPresetMoney(150)" class="py-2.5 rounded-xl bg-emerald-50 hover:bg-pet-emerald text-emerald-900 hover:text-white border border-emerald-200 font-extrabold text-sm transition-colors">$150</button>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold uppercase text-slate-500 mb-1">¿Cuánto dinero pide el cliente? ($ MXN)</label>
+                        <div class="relative">
+                            <span class="absolute left-4 top-1/2 -translate-y-1/2 text-lg font-extrabold text-pet-emerald">$</span>
+                            <input type="number" step="1" min="5" id="input-bulk-money" oninput="recalcFromMoney()" value="50" 
+                                class="w-full bg-slate-100 border-2 border-slate-200 focus:border-pet-emerald focus:bg-white rounded-xl pl-9 pr-14 py-3 text-xl font-extrabold text-pet-navy focus:outline-none">
+                            <span class="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400">MXN</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Visor tipo Báscula Digital (Resultado en tiempo real) -->
+                <div class="bg-pet-navy text-white rounded-2xl p-4 flex items-center justify-between border-2 border-slate-700 shadow-inner">
+                    <div>
+                        <span class="block text-[10px] uppercase tracking-widest text-pet-coral font-bold">Despachar en Báscula</span>
+                        <span id="scale-weight-display" class="font-mono text-2xl sm:text-3xl font-extrabold text-white">1.000 kg</span>
+                        <span id="scale-grams-sub" class="block text-xs text-slate-400 font-mono">(1,000 gramos)</span>
+                    </div>
+                    <div class="text-right">
+                        <span class="block text-[10px] uppercase tracking-widest text-pet-emerald font-bold">Importe a Cobrar</span>
+                        <span id="scale-price-display" class="font-display text-3xl font-bold text-pet-emerald">$48.00</span>
+                    </div>
+                </div>
+
+                <!-- Botón Confirmar y Agregar al Ticket -->
+                <button onclick="confirmBulkAddToCart()" class="w-full bg-pet-coral hover:bg-pet-coralDark text-white font-extrabold py-3.5 px-5 rounded-xl shadow-lg shadow-orange-500/25 flex items-center justify-center gap-2 transition-colors">
+                    <i data-lucide="plus-circle" class="w-5 h-5"></i>
+                    <span>Agregar al Ticket</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 2: TICKET TÉRMICO REALISTA           -->
+    <!-- ========================================== -->
+    <div id="thermal-ticket-modal" class="hidden fixed inset-0 z-50 bg-slate-950/75 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="w-full max-w-sm animate-pop">
+            <!-- Papel térmico simulado -->
+            <div class="bg-pet-warmCream rounded-t-2xl p-6 shadow-2xl border-b-2 border-dashed border-slate-300 font-mono text-xs text-slate-800">
+                <div class="text-center border-b border-dashed border-slate-300 pb-3 mb-3">
+                    <div class="w-10 h-10 rounded-full bg-pet-navy text-white flex items-center justify-center mx-auto mb-1.5">
+                        <i data-lucide="paw-print" class="w-5 h-5 text-pet-coral"></i>
+                    </div>
+                    <h3 id="receipt-store-name" class="font-bold text-base uppercase tracking-wider text-pet-navy">HUELLITAS & GRANEL</h3>
+                    <p class="text-[11px] text-slate-500">Alimento a Granel y Accesorios</p>
+                    <p id="receipt-date" class="text-[10px] text-slate-400 mt-1">Fecha: --/--/----</p>
+                </div>
+
+                <div id="receipt-lines" class="space-y-2 border-b border-dashed border-slate-300 pb-3 mb-3 max-h-60 overflow-y-auto">
+                    <!-- Líneas del ticket -->
+                </div>
+
+                <div class="space-y-1 text-right">
+                    <div class="flex justify-between text-sm font-bold text-pet-navy">
+                        <span>TOTAL MXN:</span>
+                        <span id="receipt-total">$0.00</span>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-600">
+                        <span>Método de pago:</span>
+                        <span id="receipt-payment">Efectivo</span>
+                    </div>
+                    <div id="receipt-change-row" class="flex justify-between text-[11px] text-slate-600">
+                        <span>Su cambio:</span>
+                        <span id="receipt-change">$0.00</span>
+                    </div>
+                </div>
+
+                <div class="text-center mt-4 pt-3 border-t border-dashed border-slate-300 text-[11px] text-slate-500">
+                    <p>¡Gracias por consentir a tu mascota! 🐾</p>
+                    <p class="mt-0.5">Conserve su ticket para aclaraciones</p>
+                </div>
+            </div>
+
+            <!-- Botones inferiores fuera del papel -->
+            <div class="bg-pet-navy p-4 rounded-b-2xl flex flex-col gap-2">
+                <div class="grid grid-cols-2 gap-2">
+                    <button onclick="window.print()" class="py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs flex items-center justify-center gap-1.5">
+                        <i data-lucide="printer" class="w-4 h-4 text-pet-coral"></i>
+                        <span>Imprimir</span>
+                    </button>
+                    <button onclick="sendCartToWhatsApp()" class="py-2.5 px-3 rounded-xl bg-pet-emerald hover:bg-pet-emeraldDark text-white font-bold text-xs flex items-center justify-center gap-1.5">
+                        <i data-lucide="message-circle" class="w-4 h-4"></i>
+                        <span>WhatsApp</span>
+                    </button>
+                </div>
+                <button onclick="finishSaleAndReset()" class="w-full py-2.5 rounded-xl bg-pet-coral hover:bg-pet-coralDark text-white font-extrabold text-xs">
+                    Nueva Venta ✓
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- MODAL 3: PERSONALIZAR TIENDA (DEMO)        -->
+    <!-- ========================================== -->
+    <div id="customize-modal" class="hidden fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+        <div class="bg-white w-full max-w-sm rounded-3xl p-6 shadow-2xl animate-pop">
+            <h3 class="font-display text-xl font-bold text-pet-navy">Personalizar Tienda</h3>
+            <p class="text-xs text-slate-500 mb-4">Cambia el nombre y WhatsApp del negocio antes de mostrarlo al dueño.</p>
+            
+            <div class="space-y-3">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">Nombre de la Tienda</label>
+                    <input type="text" id="custom-store-name" value="Huellitas & Granel" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-bold text-pet-navy">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1">WhatsApp para tickets / pedidos (10 dígitos)</label>
+                    <input type="tel" id="custom-store-phone" value="5217221234567" class="w-full bg-slate-100 border border-slate-200 rounded-xl px-3.5 py-2.5 text-sm font-mono text-pet-navy">
+                </div>
+            </div>
+
+            <div class="flex gap-2 mt-5">
+                <button onclick="closeCustomizeModal()" class="flex-1 py-2.5 rounded-xl bg-slate-100 text-slate-600 text-xs font-bold">Cancelar</button>
+                <button onclick="saveStoreSettings()" class="flex-1 py-2.5 rounded-xl bg-pet-coral text-white text-xs font-extrabold">Guardar Cambios</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- LÓGICA DE APLICACIÓN (JAVASCRIPT)          -->
+    <!-- ========================================== -->
+    <script>
+        // --- CATÁLOGO DE MUESTRA PRECARGADO (MÉXICO) ---
+        const PRODUCTS = [
+            // ALIMENTOS Y GRANEL (7 productos)
+            {
+                id: 1,
+                type: 'bulk',
+                name: 'Nupec Adulto Razas Medianas/Grandes',
+                categoryLabel: 'Croquetas Premium • Granel',
+                pricePerKg: 88.00,
+                sackCapacityKg: 20,
+                sackRemainingKg: 14.5
+            },
+            {
+                id: 2,
+                type: 'bulk',
+                name: 'Royal Canin Mini Puppy (Cachorro)',
+                categoryLabel: 'Croquetas Cachorro • Granel',
+                pricePerKg: 145.00,
+                sackCapacityKg: 15,
+                sackRemainingKg: 8.2
+            },
+            {
+                id: 3,
+                type: 'bulk',
+                name: 'Campeón Adulto (Económica)',
+                categoryLabel: 'Croquetas Perro • Granel',
+                pricePerKg: 42.00,
+                sackCapacityKg: 25,
+                sackRemainingKg: 19.0
+            },
+            {
+                id: 4,
+                type: 'bulk',
+                name: 'Pro Plan Small Breed (Razas Pequeñas)',
+                categoryLabel: 'Croquetas Premium • Granel',
+                pricePerKg: 132.00,
+                sackCapacityKg: 15,
+                sackRemainingKg: 4.1 // En alerta de bajo stock (< 5 kg)
+            },
+            {
+                id: 5,
+                type: 'bulk',
+                name: 'Cat Chow / Whiskas Pescado',
+                categoryLabel: 'Alimento para Gato • Granel',
+                pricePerKg: 68.00,
+                sackCapacityKg: 20,
+                sackRemainingKg: 12.8
+            },
+            {
+                id: 6,
+                type: 'bulk',
+                name: 'Arena Aglutinante Aroma Lavanda',
+                categoryLabel: 'Higiene Gato • Granel',
+                pricePerKg: 28.00,
+                sackCapacityKg: 25,
+                sackRemainingKg: 16.5
+            },
+            {
+                id: 7,
+                type: 'bulk',
+                name: 'Alpiste y Semillas Mixtas para Aves',
+                categoryLabel: 'Aves y Roedores • Granel',
+                pricePerKg: 36.00,
+                sackCapacityKg: 20,
+                sackRemainingKg: 11.0
+            },
+
+            // ACCESORIOS, PREMIOS Y FARMACIA (8 productos)
+            {
+                id: 101,
+                type: 'accessory',
+                name: 'Collar Ajustable Nylon Reflejante',
+                categoryLabel: 'Paseo y Accesorios',
+                price: 85.00,
+                stock: 14,
+                icon: 'tag'
+            },
+            {
+                id: 102,
+                type: 'accessory',
+                name: 'Correa Retráctil 5 Metros',
+                categoryLabel: 'Paseo y Accesorios',
+                price: 195.00,
+                stock: 6,
+                icon: 'move-horizontal'
+            },
+            {
+                id: 103,
+                type: 'accessory',
+                name: 'Plato Doble Acero Inoxidable',
+                categoryLabel: 'Comederos',
+                price: 140.00,
+                stock: 9,
+                icon: 'utensils'
+            },
+            {
+                id: 104,
+                type: 'accessory',
+                name: 'Juguete Cuerda Mordedera / Hueso',
+                categoryLabel: 'Juguetes y Premios',
+                price: 65.00,
+                stock: 18,
+                icon: 'bone'
+            },
+            {
+                id: 105,
+                type: 'accessory',
+                name: 'Shampoo Antipulgas y Garrapatas 500ml',
+                categoryLabel: 'Higiene y Estética',
+                price: 120.00,
+                stock: 11,
+                icon: 'droplets'
+            },
+            {
+                id: 106,
+                type: 'accessory',
+                name: 'Sobre Húmedo Res/Pollo (85g)',
+                categoryLabel: 'Alimento Húmedo',
+                price: 18.00,
+                stock: 36,
+                icon: 'package'
+            },
+            {
+                id: 107,
+                type: 'accessory',
+                name: 'Pipeta Antipulgas Mensual',
+                categoryLabel: 'Farmacia Veterinaria',
+                price: 165.00,
+                stock: 8,
+                icon: 'shield-check'
+            },
+            {
+                id: 108,
+                type: 'accessory',
+                name: 'Cama Acolchada Mediana Lavable',
+                categoryLabel: 'Descanso',
+                price: 380.00,
+                stock: 4,
+                icon: 'heart'
+            }
+        ];
+
+        // --- ESTADO GLOBAL ---
+        let storeName = 'Huellitas & Granel';
+        let storeWhatsApp = '5217221234567';
+        let currentFilter = 'all';
+        let cart = [];
+        let paymentMethod = 'Efectivo';
+
+        // Historial inicial con 3 ventas de ejemplo para que el corte se vea vivo
+        let salesHistory = [
+            {
+                folio: '#001',
+                time: '09:18 AM',
+                summary: '1.500 kg Nupec Adulto + 2x Sobre Húmedo',
+                bulkKg: 1.500,
+                method: 'Efectivo',
+                total: 168.00
+            },
+            {
+                folio: '#002',
+                time: '10:05 AM',
+                summary: '1.786 kg Arena Aglutinante ($50.00) + 1x Collar Reflejante',
+                bulkKg: 1.786,
+                method: 'Tarjeta',
+                total: 135.00
+            },
+            {
+                folio: '#003',
+                time: '11:12 AM',
+                summary: '2.000 kg Campeón Adulto + 1x Shampoo Antipulgas',
+                bulkKg: 2.000,
+                method: 'Efectivo',
+                total: 204.00
+            }
+        ];
+
+        // Variables del modal de báscula
+        let activeBulkProduct = null;
+        let currentBulkMode = 'weight';
+        let calculatedKg = 1.0;
+        let calculatedPrice = 0;
+
+        // --- NAVEGACIÓN ENTRE PESTAÑAS ---
+        function switchMainTab(tab) {
+            document.getElementById('view-pos').classList.toggle('hidden', tab !== 'pos');
+            document.getElementById('view-sacks').classList.toggle('hidden', tab !== 'sacks');
+            document.getElementById('view-history').classList.toggle('hidden', tab !== 'history');
+
+            const activeClass = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold bg-pet-coral text-white shadow-md shadow-orange-500/20 transition-all relative';
+            const inactiveClass = 'flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-semibold text-slate-300 hover:text-white transition-all relative';
+
+            document.getElementById('nav-pos').className = tab === 'pos' ? activeClass : inactiveClass;
+            document.getElementById('nav-sacks').className = tab === 'sacks' ? activeClass : inactiveClass;
+            document.getElementById('nav-history').className = tab === 'history' ? activeClass : inactiveClass;
+
+            if (tab === 'sacks') renderSacksGrid();
+            if (tab === 'history') renderSalesHistory();
+        }
+
+        // --- BOTÓN DE VENTA RÁPIDA DE MUESTRA ---
+        function loadSampleCart() {
+            const nupec = PRODUCTS.find(p => p.id === 1);
+            const arena = PRODUCTS.find(p => p.id === 6);
+            const collar = PRODUCTS.find(p => p.id === 101);
+
+            cart = [
+                {
+                    cartId: Date.now() + 1,
+                    productId: nupec.id,
+                    type: 'bulk',
+                    name: nupec.name,
+                    weightKg: 1.250,
+                    unitPrice: nupec.pricePerKg,
+                    subtotal: 1.250 * nupec.pricePerKg // $110.00
+                },
+                {
+                    cartId: Date.now() + 2,
+                    productId: arena.id,
+                    type: 'bulk',
+                    name: arena.name,
+                    weightKg: 50 / arena.pricePerKg, // $50 exactos en arena
+                    unitPrice: arena.pricePerKg,
+                    subtotal: 50.00
+                },
+                {
+                    cartId: Date.now() + 3,
+                    productId: collar.id,
+                    type: 'accessory',
+                    name: collar.name,
+                    qty: 1,
+                    unitPrice: collar.price,
+                    subtotal: collar.price // $85.00
+                }
+            ];
+
+            document.getElementById('cash-received').value = '300';
+            switchMainTab('pos');
+            renderCart();
+            showToast('Venta de muestra cargada ($245.00 MXN)', 'success');
+        }
+
+        // --- RENDERIZADO DEL CATÁLOGO ---
+        function setCatalogFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.cat-filter-btn').forEach(btn => {
+                const f = btn.getAttribute('data-filter');
+                if (f === filter) {
+                    btn.classList.add('ring-2', 'ring-offset-1', 'ring-pet-navy');
+                } else {
+                    btn.classList.remove('ring-2', 'ring-offset-1', 'ring-pet-navy');
+                }
+            });
+            renderCatalog();
+        }
+
+        function renderCatalog() {
+            const grid = document.getElementById('catalog-grid');
+            const search = document.getElementById('catalog-search').value.trim().toLowerCase();
+
+            const filtered = PRODUCTS.filter(p => {
+                const matchType = currentFilter === 'all' || p.type === currentFilter;
+                const matchQuery = p.name.toLowerCase().includes(search) || p.categoryLabel.toLowerCase().includes(search);
+                return matchType && matchQuery;
+            });
+
+            if (filtered.length === 0) {
+                grid.innerHTML = `<div class="col-span-full py-10 text-center text-slate-400 text-sm">No se encontraron productos con "${search}".</div>`;
+                return;
+            }
+
+            grid.innerHTML = filtered.map(p => {
+                if (p.type === 'bulk') {
+                    const isLow = p.sackRemainingKg <= 5.0;
+                    return `
+                        <div onclick="openBulkModal(${p.id})" class="group bg-white rounded-2xl p-4 border-2 border-orange-200/80 hover:border-pet-coral shadow-xs hover:shadow-md transition-all cursor-pointer flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-start justify-between gap-2 mb-2">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-pet-warmCream text-orange-900 border border-orange-200/70">
+                                        <i data-lucide="scale" class="w-3 h-3 text-pet-coral"></i> A Granel
+                                    </span>
+                                    <span class="text-[11px] font-bold ${isLow ? 'text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200' : 'text-slate-400'}">
+                                        Costal: ${p.sackRemainingKg.toFixed(1)} kg
+                                    </span>
+                                </div>
+                                <h3 class="font-bold text-base text-pet-navy group-hover:text-pet-coralDark leading-snug">${p.name}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">${p.categoryLabel}</p>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                                <div>
+                                    <span class="font-display text-xl font-bold text-pet-coral">$${p.pricePerKg.toFixed(2)}</span>
+                                    <span class="text-xs font-semibold text-slate-400">/ kg</span>
+                                </div>
+                                <button type="button" class="px-3 py-1.5 rounded-xl bg-pet-coral group-hover:bg-pet-coralDark text-white font-extrabold text-xs flex items-center gap-1 shadow-xs transition-colors">
+                                    <i data-lucide="scale" class="w-3.5 h-3.5"></i>
+                                    <span>Pesar / $</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const outOfStock = p.stock <= 0;
+                    return `
+                        <div onclick="${outOfStock ? '' : `addAccessoryToCart(${p.id})`}" class="group bg-white rounded-2xl p-4 border border-slate-200 hover:border-pet-emerald shadow-xs hover:shadow-md transition-all ${outOfStock ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'} flex flex-col justify-between">
+                            <div>
+                                <div class="flex items-start justify-between gap-2 mb-2">
+                                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-pet-emeraldDark border border-emerald-200/70">
+                                        <i data-lucide="${p.icon}" class="w-3 h-3"></i> Pieza
+                                    </span>
+                                    <span class="text-[11px] font-semibold ${p.stock <= 5 ? 'text-pet-coral font-bold' : 'text-slate-400'}">
+                                        Stock: ${p.stock} pzas
+                                    </span>
+                                </div>
+                                <h3 class="font-bold text-base text-pet-navy group-hover:text-pet-emeraldDark leading-snug">${p.name}</h3>
+                                <p class="text-xs text-slate-400 mt-0.5">${p.categoryLabel}</p>
+                            </div>
+
+                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-slate-100">
+                                <span class="font-display text-xl font-bold text-pet-navy">$${p.price.toFixed(2)}</span>
+                                <button type="button" class="px-3 py-1.5 rounded-xl bg-emerald-50 group-hover:bg-pet-emerald text-pet-emeraldDark group-hover:text-white font-bold text-xs flex items-center gap-1 transition-colors">
+                                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                                    <span>Agregar</span>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            lucide.createIcons();
+            checkLowSacksAlert();
+        }
+
+        // --- LÓGICA DEL MODAL DE PESAJE INTELIGENTE (GRANEL) ---
+        function openBulkModal(productId) {
+            const prod = PRODUCTS.find(p => p.id === productId);
+            if (!prod) return;
+
+            activeBulkProduct = prod;
+            document.getElementById('bulk-modal-name').textContent = prod.name;
+            document.getElementById('bulk-modal-price-kg').textContent = `$${prod.pricePerKg.toFixed(2)} MXN / Kilogramo`;
+
+            setBulkMode('weight');
+            setPresetWeight(1);
+            document.getElementById('bulk-modal').classList.remove('hidden');
+        }
+
+        function closeBulkModal() {
+            document.getElementById('bulk-modal').classList.add('hidden');
+            activeBulkProduct = null;
+        }
+
+        function setBulkMode(mode) {
+            currentBulkMode = mode;
+            const tabW = document.getElementById('tab-bulk-weight');
+            const tabM = document.getElementById('tab-bulk-money');
+            const panelW = document.getElementById('panel-bulk-weight');
+            const panelM = document.getElementById('panel-bulk-money');
+
+            if (mode === 'weight') {
+                tabW.className = 'py-2.5 rounded-lg text-xs sm:text-sm font-extrabold bg-white text-pet-navy shadow-xs flex items-center justify-center gap-1.5 transition-all';
+                tabM.className = 'py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-500 hover:text-pet-navy flex items-center justify-center gap-1.5 transition-all';
+                panelW.classList.remove('hidden');
+                panelM.classList.add('hidden');
+                recalcFromWeight();
+            } else {
+                tabM.className = 'py-2.5 rounded-lg text-xs sm:text-sm font-extrabold bg-white text-pet-navy shadow-xs flex items-center justify-center gap-1.5 transition-all';
+                tabW.className = 'py-2.5 rounded-lg text-xs sm:text-sm font-bold text-slate-500 hover:text-pet-navy flex items-center justify-center gap-1.5 transition-all';
+                panelM.classList.remove('hidden');
+                panelW.classList.add('hidden');
+                recalcFromMoney();
+            }
+        }
+
+        function setPresetWeight(kg) {
+            document.getElementById('input-bulk-kg').value = kg.toFixed(3);
+            recalcFromWeight();
+        }
+
+        function setPresetMoney(mxn) {
+            document.getElementById('input-bulk-money').value = mxn;
+            recalcFromMoney();
+        }
+
+        function recalcFromWeight() {
+            if (!activeBulkProduct) return;
+            const kg = Math.max(0, parseFloat(document.getElementById('input-bulk-kg').value) || 0);
+            calculatedKg = kg;
+            calculatedPrice = kg * activeBulkProduct.pricePerKg;
+            updateScaleDisplay();
+        }
+
+        function recalcFromMoney() {
+            if (!activeBulkProduct) return;
+            const money = Math.max(0, parseFloat(document.getElementById('input-bulk-money').value) || 0);
+            calculatedPrice = money;
+            calculatedKg = money / activeBulkProduct.pricePerKg;
+            updateScaleDisplay();
+        }
+
+        function updateScaleDisplay() {
+            const grams = Math.round(calculatedKg * 1000);
+            document.getElementById('scale-weight-display').textContent = `${calculatedKg.toFixed(3)} kg`;
+            document.getElementById('scale-grams-sub').textContent = `(${grams.toLocaleString('es-MX')} gramos)`;
+            document.getElementById('scale-price-display').textContent = `$${calculatedPrice.toFixed(2)}`;
+        }
+
+        function confirmBulkAddToCart() {
+            if (!activeBulkProduct || calculatedKg <= 0) {
+                showToast('Ingresa un peso o monto válido', 'error');
+                return;
+            }
+
+            if (calculatedKg > activeBulkProduct.sackRemainingKg) {
+                showToast(`Aviso: Solo quedan ${activeBulkProduct.sackRemainingKg.toFixed(2)} kg en el costal abierto`, 'warning');
+            }
+
+            cart.push({
+                cartId: Date.now() + Math.random(),
+                productId: activeBulkProduct.id,
+                type: 'bulk',
+                name: activeBulkProduct.name,
+                weightKg: calculatedKg,
+                unitPrice: activeBulkProduct.pricePerKg,
+                subtotal: calculatedPrice
+            });
+
+            showToast(`Agregado: ${calculatedKg.toFixed(3)} kg de ${activeBulkProduct.name}`);
+            closeBulkModal();
+            renderCart();
+        }
+
+        // --- AGREGAR ACCESORIOS POR PIEZA ---
+        function addAccessoryToCart(productId) {
+            const prod = PRODUCTS.find(p => p.id === productId);
+            if (!prod || prod.stock <= 0) return;
+
+            const existing = cart.find(item => item.type === 'accessory' && item.productId === productId);
+            if (existing) {
+                if (existing.qty >= prod.stock) {
+                    showToast('No hay más unidades disponibles en stock', 'warning');
+                    return;
+                }
+                existing.qty += 1;
+                existing.subtotal = existing.qty * prod.price;
+            } else {
+                cart.push({
+                    cartId: Date.now() + Math.random(),
+                    productId: prod.id,
+                    type: 'accessory',
+                    name: prod.name,
+                    qty: 1,
+                    unitPrice: prod.price,
+                    subtotal: prod.price
+                });
+            }
+
+            showToast(`Agregado: ${prod.name}`);
+            renderCart();
+        }
+
+        // --- RENDERIZADO Y OPERACIONES DEL CARRITO / TICKET ---
+        function renderCart() {
+            const listEl = document.getElementById('cart-list');
+            const emptyEl = document.getElementById('cart-empty');
+            const badgeEl = document.getElementById('ticket-items-badge');
+
+            badgeEl.textContent = `${cart.length} ${cart.length === 1 ? 'artículo' : 'artículos'}`;
+
+            if (cart.length === 0) {
+                listEl.innerHTML = '';
+                listEl.appendChild(emptyEl);
+                emptyEl.classList.remove('hidden');
+                updateCartTotals();
+                return;
+            }
+
+            listEl.innerHTML = cart.map(item => {
+                if (item.type === 'bulk') {
+                    return `
+                        <div class="py-3 flex items-center justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <span class="inline-block text-[10px] font-extrabold uppercase px-1.5 py-0.5 rounded bg-pet-warmCream text-orange-900 border border-orange-200">
+                                    ${item.weightKg.toFixed(3)} kg
+                                </span>
+                                <h4 class="font-bold text-sm text-pet-navy truncate mt-0.5">${item.name}</h4>
+                                <p class="text-[11px] text-slate-400">$${item.unitPrice.toFixed(2)}/kg</p>
+                            </div>
+                            <div class="flex items-center gap-2.5">
+                                <span class="font-display font-bold text-base text-pet-navy">$${item.subtotal.toFixed(2)}</span>
+                                <button onclick="removeCartItem(${item.cartId})" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors">
+                                    <i data-lucide="x" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="py-3 flex items-center justify-between gap-2">
+                            <div class="flex-1 min-w-0">
+                                <h4 class="font-bold text-sm text-pet-navy truncate">${item.name}</h4>
+                                <p class="text-[11px] text-slate-400">$${item.unitPrice.toFixed(2)} c/u</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <div class="flex items-center bg-slate-100 rounded-lg border border-slate-200">
+                                    <button onclick="changeAccessoryQty(${item.cartId}, -1)" class="w-6 h-6 flex items-center justify-center font-bold text-slate-600">-</button>
+                                    <span class="w-6 text-center text-xs font-extrabold text-pet-navy">${item.qty}</span>
+                                    <button onclick="changeAccessoryQty(${item.cartId}, 1)" class="w-6 h-6 flex items-center justify-center font-bold text-slate-600">+</button>
+                                </div>
+                                <span class="font-display font-bold text-base text-pet-navy w-16 text-right">$${item.subtotal.toFixed(2)}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+
+            lucide.createIcons();
+            updateCartTotals();
+        }
+
+        function changeAccessoryQty(cartId, delta) {
+            const idx = cart.findIndex(c => c.cartId === cartId);
+            if (idx === -1) return;
+
+            const item = cart[idx];
+            const prod = PRODUCTS.find(p => p.id === item.productId);
+            const nextQty = item.qty + delta;
+
+            if (nextQty <= 0) {
+                cart.splice(idx, 1);
+            } else if (prod && nextQty <= prod.stock) {
+                item.qty = nextQty;
+                item.subtotal = item.qty * item.unitPrice;
+            } else {
+                showToast('Stock máximo alcanzado', 'warning');
+            }
+            renderCart();
+        }
+
+        function removeCartItem(cartId) {
+            cart = cart.filter(c => c.cartId !== cartId);
+            renderCart();
+        }
+
+        function clearCart() {
+            if (cart.length === 0) return;
+            cart = [];
+            document.getElementById('cash-received').value = '';
+            renderCart();
+            showToast('Ticket limpiado');
+        }
+
+        function getCartTotalAmount() {
+            return cart.reduce((sum, item) => sum + item.subtotal, 0);
+        }
+
+        function updateCartTotals() {
+            const total = getCartTotalAmount();
+            document.getElementById('pos-subtotal').textContent = `$${total.toFixed(2)} MXN`;
+            document.getElementById('pos-total').textContent = `$${total.toFixed(2)}`;
+            calculateChange();
+        }
+
+        function selectPaymentMethod(method) {
+            paymentMethod = method;
+            ['Efectivo', 'Tarjeta', 'Transferencia'].forEach(m => {
+                const btn = document.getElementById(`pay-${m}`);
+                if (m === method) {
+                    btn.className = 'pay-method-btn py-2 px-2 rounded-xl border-2 border-pet-emerald bg-emerald-50 text-pet-emeraldDark text-xs font-bold flex items-center justify-center gap-1 transition-all';
+                } else {
+                    btn.className = 'pay-method-btn py-2 px-2 rounded-xl border border-slate-200 bg-white text-slate-600 text-xs font-semibold flex items-center justify-center gap-1 transition-all';
+                }
+            });
+
+            document.getElementById('cash-change-box').classList.toggle('hidden', method !== 'Efectivo');
+        }
+
+        function calculateChange() {
+            const total = getCartTotalAmount();
+            const received = parseFloat(document.getElementById('cash-received').value) || 0;
+            const change = Math.max(0, received - total);
+            document.getElementById('cash-change-display').textContent = `$${change.toFixed(2)}`;
+        }
+
+        // --- COBRO, DESCUENTO DE INVENTARIO Y TICKET TÉRMICO ---
+        function processCheckout() {
+            if (cart.length === 0) {
+                showToast('Agrega al menos un producto para cobrar', 'error');
+                return;
+            }
+
+            const total = getCartTotalAmount();
+            const received = parseFloat(document.getElementById('cash-received').value) || total;
+            const change = paymentMethod === 'Efectivo' ? Math.max(0, received - total) : 0;
+
+            // Descontar inventario real (kilogramos de costales y piezas de accesorios)
+            let totalBulkSoldKg = 0;
+            const itemDescriptions = [];
+
+            cart.forEach(item => {
+                const prod = PRODUCTS.find(p => p.id === item.productId);
+                if (!prod) return;
+                if (item.type === 'bulk') {
+                    prod.sackRemainingKg = Math.max(0, prod.sackRemainingKg - item.weightKg);
+                    totalBulkSoldKg += item.weightKg;
+                    itemDescriptions.push(`${item.weightKg.toFixed(3)} kg ${item.name}`);
+                } else {
+                    prod.stock = Math.max(0, prod.stock - item.qty);
+                    itemDescriptions.push(`${item.qty}x ${item.name}`);
+                }
+            });
+
+            // Guardar en el historial de ventas del día
+            const now = new Date();
+            const timeStr = now.toLocaleTimeString('es-MX', { hour: '2-digit', minute: '2-digit' });
+            salesHistory.unshift({
+                folio: `#00${salesHistory.length + 1}`,
+                time: timeStr,
+                summary: itemDescriptions.join(' + '),
+                bulkKg: totalBulkSoldKg,
+                method: paymentMethod,
+                total: total
+            });
+
+            // Llenar vista previa del ticket térmico
+            document.getElementById('receipt-store-name').textContent = storeName.toUpperCase();
+            document.getElementById('receipt-date').textContent = `Fecha: ${now.toLocaleDateString('es-MX')} ${timeStr}`;
+            document.getElementById('thermal-ticket-modal').classList.remove('hidden');
+            lucide.createIcons();
+        }
+
+        function finishSaleAndReset() {
+            document.getElementById('thermal-ticket-modal').classList.add('hidden');
+            cart = [];
+            document.getElementById('cash-received').value = '';
+            renderCart();
+            showToast('¡Venta registrada e inventario actualizado!');
+        }
+
+        function sendCartToWhatsApp() {
+            if (cart.length === 0) {
+                showToast('El carrito está vacío', 'error');
+                return;
+            }
+            const total = getCartTotalAmount();
+            const lines = cart.map(item => {
+                if (item.type === 'bulk') {
+                    return `▪ *${item.weightKg.toFixed(3)} kg* - ${item.name}: $${item.subtotal.toFixed(2)}`;
+                }
+                return `▪ *${item.qty} pza* - ${item.name}: $${item.subtotal.toFixed(2)}`;
+            }).join('\n');
+
+            const message = 
+`🐾 *TICKET DE COMPRA - ${storeName.toUpperCase()}*
+────────────────────
+${lines}
+────────────────────
+💳 *Pago:* ${paymentMethod}
+💰 *TOTAL: $${total.toFixed(2)} MXN*
+
+¡Gracias por tu preferencia! 🐶🐱`;
+
+            const cleanPhone = storeWhatsApp.replace(/\D/g, '');
+            window.open(`https://wa.me/${cleanPhone}?text=${encodeURIComponent(message)}`, '_blank');
+        }
+
+        // --- CONTROL DE COSTALES ABIERTOS ---
+        function renderSacksGrid() {
+            const grid = document.getElementById('sacks-grid');
+            const bulkProducts = PRODUCTS.filter(p => p.type === 'bulk');
+
+            grid.innerHTML = bulkProducts.map(p => {
+                const pct = Math.min(100, Math.round((p.sackRemainingKg / p.sackCapacityKg) * 100));
+                const isLow = p.sackRemainingKg <= 5.0;
+                const barColor = isLow ? 'bg-pet-roseAccent' : (pct < 50 ? 'bg-pet-coral' : 'bg-pet-emerald');
+
+                return `
+                    <div class="bg-white rounded-2xl p-5 border-2 ${isLow ? 'border-rose-300' : 'border-slate-200'} shadow-xs flex flex-col justify-between space-y-4">
+                        <div>
+                            <div class="flex items-center justify-between gap-2 mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Costal de ${p.sackCapacityKg} kg</span>
+                                ${isLow 
+                                    ? `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-rose-100 text-rose-700 flex items-center gap-1"><i data-lucide="alert-triangle" class="w-3 h-3"></i> ¡Por terminarse!</span>`
+                                    : `<span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-pet-emeraldDark">Nivel óptimo</span>`
+                                }
+                            </div>
+                            <h3 class="font-bold text-lg text-pet-navy leading-snug">${p.name}</h3>
+                            <p class="text-xs text-slate-500 mt-0.5">Precio venta: $${p.pricePerKg.toFixed(2)} / kg</p>
+                        </div>
+
+                        <div class="space-y-2">
+                            <div class="flex justify-between items-baseline">
+                                <span class="text-xs font-semibold text-slate-500">Disponible en costal:</span>
+                                <span class="font-display text-2xl font-bold ${isLow ? 'text-rose-600' : 'text-pet-navy'}">${p.sackRemainingKg.toFixed(2)} kg</span>
+                            </div>
+                            <div class="w-full h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                                <div class="h-full ${barColor} transition-all duration-500" style="width: ${pct}%"></div>
+                            </div>
+                        </div>
+
+                        <div class="pt-2 flex gap-2">
+                            <button onclick="openNewSack(${p.id}, 20)" class="flex-1 py-2.5 px-3 rounded-xl bg-pet-navyLight hover:bg-pet-navy text-white font-extrabold text-xs flex items-center justify-center gap-1 transition-colors">
+                                <i data-lucide="package-plus" class="w-4 h-4 text-pet-coral"></i>
+                                <span>Abrir Costal 20kg</span>
+                            </button>
+                            <button onclick="openNewSack(${p.id}, 25)" class="py-2.5 px-3 rounded-xl bg-pet-warmCream hover:bg-orange-100 text-orange-900 border border-orange-200 font-bold text-xs transition-colors">
+                                +25kg
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            lucide.createIcons();
+        }
+
+        function openNewSack(productId, weightToAdd) {
+            const prod = PRODUCTS.find(p => p.id === productId);
+            if (!prod) return;
+
+            prod.sackCapacityKg = weightToAdd;
+            prod.sackRemainingKg = weightToAdd;
+            renderSacksGrid();
+            renderCatalog();
+            showToast(`Nuevo costal de ${weightToAdd} kg abierto para ${prod.name}`);
+        }
+
+        function checkLowSacksAlert() {
+            const hasLow = PRODUCTS.some(p => p.type === 'bulk' && p.sackRemainingKg <= 5.0);
+            document.getElementById('low-sack-badge').classList.toggle('hidden', !hasLow);
+        }
+
+        // --- RENDERIZADO DE VENTAS DEL DÍA / CORTE DE CAJA ---
+        function renderSalesHistory() {
+            const totalRevenue = salesHistory.reduce((acc, s) => acc + s.total, 0);
+            const totalKg = salesHistory.reduce((acc, s) => acc + s.bulkKg, 0);
+
+            document.getElementById('kpi-sales-count').textContent = salesHistory.length;
+            document.getElementById('kpi-sales-total').textContent = `$${totalRevenue.toFixed(2)}`;
+            document.getElementById('kpi-bulk-kg').textContent = `${totalKg.toFixed(2)} kg`;
+
+            const tbody = document.getElementById('sales-history-body');
+            tbody.innerHTML = salesHistory.map(sale => `
+                <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-3.5 px-4 whitespace-nowrap">
+                        <span class="font-mono font-bold text-pet-navy">${sale.folio}</span>
+                        <span class="block text-[11px] text-slate-400">${sale.time}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-slate-700 font-medium">${sale.summary}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="px-2.5 py-1 rounded-full text-xs font-bold ${sale.method === 'Efectivo' ? 'bg-emerald-50 text-pet-emeraldDark' : 'bg-sky-50 text-pet-navyLight'}">
+                            ${sale.method}
+                        </span>
+                    </td>
+                    <td class="py-3.5 px-4 text-right font-display font-bold text-base text-pet-navy">
+                        $${sale.total.toFixed(2)}
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // --- PERSONALIZAR TIENDA EN VIVO ---
+        function openCustomizeModal() {
+            document.getElementById('customize-modal').classList.remove('hidden');
+        }
+
+        function closeCustomizeModal() {
+            document.getElementById('customize-modal').classList.add('hidden');
+        }
+
+        function saveStoreSettings() {
+            const nameVal = document.getElementById('custom-store-name').value.trim();
+            const phoneVal = document.getElementById('custom-store-phone').value.trim();
+            if (nameVal) {
+                storeName = nameVal;
+                document.getElementById('store-name-header').textContent = storeName;
+            }
+            if (phoneVal) storeWhatsApp = phoneVal;
+
+            closeCustomizeModal();
+            showToast('Tienda personalizada correctamente');
+        }
+
+        // --- TOAST NOTIFICATIONS ---
+        function showToast(msg, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            
+            let bgClass = 'bg-pet-navy text-white border-slate-700';
+            if (type === 'error') bgClass = 'bg-rose-600 text-white border-rose-500';
+            if (type === 'warning') bgClass = 'bg-pet-coral text-white border-orange-400';
+
+            el.className = `pointer-events-auto px-4 py-3 rounded-xl border shadow-xl text-xs font-bold flex items-center gap-2 transition-all duration-300 opacity-0 translate-y-2 ${bgClass}`;
+            el.textContent = msg;
+            container.appendChild(el);
+
+            requestAnimationFrame(() => {
+                el.classList.remove('opacity-0', 'translate-y-2');
+            });
+
+            setTimeout(() => {
+                el.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => el.remove(), 300);
+            }, 2600);
+        }
+
+        // --- INICIALIZACIÓN ---
+        window.onload = function() {
+            renderCatalog();
+            renderCart();
+            renderSalesHistory();
+            lucide.createIcons();
+        };
+    </script>
+</body>
+</html>
